@@ -3,7 +3,7 @@ import pytest
 from pyspark_test import assert_pyspark_df_equal
 from pyspark.sql import SparkSession, functions as F
 from tests.utilz.df_test_helper import compare, create_df
-from df_utils.operation import melt
+from df_utils.operation import melt, stack
 
 
 def quiet_py4j():
@@ -19,13 +19,26 @@ def spark_session(request):
     return spark_session
 
 
-def test_top_floor_extract(spark_session):
+def test_melt_function(spark_session):
     # arrange
     test_df = get_test_data(spark_session)
     expected_df = get_expect_data(spark_session)
 
     # act
     output_df = melt(test_df, ["col1", "col2", "col3"], ["Y1", "Y2", "Y3"], "category", "value").sort(F.col("value"))
+
+    # assert
+    compare(expected_df, output_df)
+    assert_pyspark_df_equal(expected_df, output_df)
+
+
+def test_stack_function(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session)
+    expected_df = get_expect_data(spark_session)
+
+    # act
+    output_df = stack(test_df, ["Y1", "Y2", "Y3"], "category", "value").sort(F.col("value"))
 
     # assert
     compare(expected_df, output_df)
