@@ -3,7 +3,7 @@ import pytest
 from pyspark_test import assert_pyspark_df_equal
 from pyspark.sql import SparkSession, functions as F
 from tests.utilz.df_test_helper import compare, create_df
-from df_utils.operation import melt, stack, union_all
+from df_utils.operation import melt, stack, union_all, _rename_df
 
 
 def quiet_py4j():
@@ -13,12 +13,23 @@ def quiet_py4j():
 
 @pytest.fixture(scope="session")
 def spark_session(request):
-
-    # findspark.init()
     spark_session = SparkSession.builder.getOrCreate()
     request.addfinalizer(lambda: spark_session.stop())
     quiet_py4j()
     return spark_session
+
+
+def test_rename_dict(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session)
+    expected_df = get_test_rename_data(spark_session)
+
+    # act
+    output_df = _rename_df(test_df, get_rename_dict())
+
+    # assert
+    compare(expected_df, output_df)
+    assert_pyspark_df_equal(expected_df, output_df)
 
 
 def test_melt_function(spark_session):
@@ -82,4 +93,16 @@ def get_expect_data(spark_session):
             (4000521, "BOF_I2189490CA-20", "89EN", "Y1", 7000.07),
             (4000521, "BOF_I2189490CA-20", "89EN", "Y2", 8000.08),
             (4000521, "BOF_I2189490CA-20", "89EN", "Y3", 9000.09)]
+    return create_df(columns, data, spark_session)
+
+
+def get_rename_dict():
+    return {"col1": "measure1", "col2": "measure2", "col3": "measure3"}
+
+
+def get_test_rename_data(spark_session):
+    columns = ("measure1", "measure2", "measure3", "Y1", "Y2", "Y3")
+    data = [(4000521, "BOF_I2189490CA-20", "89EB", 1000.01, 2000.02, 3000.03),
+            (4000521, "BOF_I2189490CA-20", "89EK", 4000.04, 5000.05, 6000.06),
+            (4000521, "BOF_I2189490CA-20", "89EN", 7000.07, 8000.08, 9000.09)]
     return create_df(columns, data, spark_session)
