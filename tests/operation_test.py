@@ -2,6 +2,7 @@ import logging
 import pytest
 from pyspark_test import assert_pyspark_df_equal
 from pyspark.sql import SparkSession
+from tests.utilz.df_test_helper import compare, create_df
 
 
 def quiet_py4j():
@@ -34,14 +35,4 @@ def test_top_floor_extract(spark_session):
 def get_output_for_top_floor(spark_session):
     columns = 'top_floor', 'count'
     data = [("5", 3), ("3", 2), ("2", 1), ("10", 1)]
-    return spark_session.createDataFrame(data).toDF(*columns)
-
-
-def compare(df1_exp, df2_act):
-    print()
-    print("expected:")
-    df1_exp.show()
-    print("actual:")
-    df2_act.show() if df2_act is not None else print("Actual Dataframe Is None")
-    print("difference:")
-    df1_exp.subtract(df2_act).show() if df2_act is not None else print("Actual Dataframe Is None")
+    return create_df(columns, data, spark_session)
