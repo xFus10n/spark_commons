@@ -23,7 +23,7 @@ def union_all(*dfs, allow_missing_columns: bool = False):
     )
 
 
-def _rename_df(df: DataFrame, rename_dict: dict):
+def rename_df(df: DataFrame, rename_dict: dict):
     _new_cols = [rename_dict.get(i, i) for i in df.columns]
     return df.toDF(*_new_cols)
 
