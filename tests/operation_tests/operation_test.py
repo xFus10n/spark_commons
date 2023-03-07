@@ -13,6 +13,8 @@ def quiet_py4j():
 
 @pytest.fixture(scope="session")
 def spark_session(request):
+
+    # findspark.init()
     spark_session = SparkSession.builder.getOrCreate()
     request.addfinalizer(lambda: spark_session.stop())
     quiet_py4j()
@@ -45,19 +47,20 @@ def test_stack_function(spark_session):
     assert_pyspark_df_equal(expected_df, output_df)
 
 
-# def test_union(spark_session):
-#     # arrange
-#     test_df = get_test_data(spark_session)
-#     expected_df = get_test_data(spark_session)
-#
-#     # act
-#     actual_df1 = test_df.where(F.col("col3") == "89EB")
-#     actual_df2 = test_df.where(F.col("col3") == "89EK")
-#     actual_df3 = test_df.where(F.col("col3") == "89EN")
-#     output_df = union_all(actual_df1, actual_df2, actual_df3)
-#
-#     # assert
-#     output_df.show()
+def test_union(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session)
+    expected_df = get_test_data(spark_session)
+
+    # act
+    actual_df1 = test_df.where(F.col("col3") == "89EB")
+    actual_df2 = test_df.where(F.col("col3") == "89EK")
+    actual_df3 = test_df.where(F.col("col3") == "89EN")
+    output_df = union_all(actual_df1, actual_df2, actual_df3)
+
+    # assert
+    compare(expected_df, output_df)
+    assert_pyspark_df_equal(expected_df, output_df)
 
 
 def get_test_data(spark_session):
