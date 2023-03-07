@@ -19,7 +19,7 @@ def stack(df: DataFrame, columns: list, var_col: str, var_val: str) -> DataFrame
 
 def union_all(*dfs, allow_missing_columns: bool = False):
     return reduce(
-        partial(DataFrame.unionByName, allowMisingColumns=allow_missing_columns), dfs
+        partial(DataFrame.unionByName, allowMissingColumns=allow_missing_columns), dfs
     )
 
 

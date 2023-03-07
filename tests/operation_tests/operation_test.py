@@ -3,7 +3,7 @@ import pytest
 from pyspark_test import assert_pyspark_df_equal
 from pyspark.sql import SparkSession, functions as F
 from tests.utilz.df_test_helper import compare, create_df
-from df_utils.operation import melt, stack
+from df_utils.operation import melt, stack, union_all
 
 
 def quiet_py4j():
@@ -43,6 +43,21 @@ def test_stack_function(spark_session):
     # assert
     compare(expected_df, output_df)
     assert_pyspark_df_equal(expected_df, output_df)
+
+
+# def test_union(spark_session):
+#     # arrange
+#     test_df = get_test_data(spark_session)
+#     expected_df = get_test_data(spark_session)
+#
+#     # act
+#     actual_df1 = test_df.where(F.col("col3") == "89EB")
+#     actual_df2 = test_df.where(F.col("col3") == "89EK")
+#     actual_df3 = test_df.where(F.col("col3") == "89EN")
+#     output_df = union_all(actual_df1, actual_df2, actual_df3)
+#
+#     # assert
+#     output_df.show()
 
 
 def get_test_data(spark_session):
