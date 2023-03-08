@@ -13,7 +13,8 @@ from df_utils.operation import (
     melt,
     stack,
     union_all,
-    rename_df
+    rename_df,
+    null_safe_sum
 )
 
 
@@ -28,6 +29,17 @@ def spark_session(request):
     request.addfinalizer(lambda: spark_session.stop())
     quiet_py4j()
     return spark_session
+
+
+def test_null_safe_sum(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session)
+
+    # act
+    output_df = test_df.withColumn("sum", F.round(null_safe_sum("Y1", "Y2"), 2))
+
+    # assert
+    output_df.show()
 
 
 def test_rename_dict(spark_session):
