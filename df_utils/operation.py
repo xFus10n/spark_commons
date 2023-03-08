@@ -49,7 +49,6 @@ def cast_columns(df: DataFrame, colz: list, new_type: DataType = StringType()) -
     return df.select([F.col(c).cast(new_type) if c in colz else c for c in df.columns])
 
 
-def null_safe_sum(col1:str, col2: str) -> F.Column:
-    _both_nulls = F.isnull(col1) & F.isnull(col2)
-    _sum = F.coalesce(col1, F.lit(0)) + F.coalesce(col2, F.lit(0))
-    return F.when(_both_nulls, F.lit(0)).otherwise(_sum)
+def null_safe_sum(col1: str, col2: str) -> F.Column:
+    _sum = F.coalesce(col1, F.lit(0)).__add__(F.coalesce(col2, F.lit(0)))
+    return _sum

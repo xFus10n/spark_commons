@@ -36,6 +36,8 @@ def test_null_safe_sum(spark_session):
     test_df = get_test_data(spark_session)
 
     # act
+    test_df = test_df.withColumn("Y1", F.lit(None))
+    test_df = test_df.withColumn("Y2", F.lit(None))
     output_df = test_df.withColumn("sum", F.round(null_safe_sum("Y1", "Y2"), 2))
 
     # assert
