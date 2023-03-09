@@ -36,7 +36,7 @@ def add_missing_columns(df: DataFrame, ref_df: DataFrame) -> DataFrame:
         ref_df (DataFrame): referential dataframe
 
     Returns:
-        DataFrame: df with additionnal columns from ref_df
+        DataFrame: df with additional columns from ref_df
     """
     for col in ref_df.schema:
         if col.name not in df.columns:
