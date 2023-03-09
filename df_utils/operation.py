@@ -23,7 +23,7 @@ def union_all(*dfs, allow_missing_columns: bool = False):
     )
 
 
-def _rename_df(df: DataFrame, rename_dict: dict):
+def rename_df(df: DataFrame, rename_dict: dict):
     _new_cols = [rename_dict.get(i, i) for i in df.columns]
     return df.toDF(*_new_cols)
 
@@ -47,3 +47,23 @@ def add_missing_columns(df: DataFrame, ref_df: DataFrame) -> DataFrame:
 
 def cast_columns(df: DataFrame, colz: list, new_type: DataType = StringType()) -> DataFrame:
     return df.select([F.col(c).cast(new_type) if c in colz else c for c in df.columns])
+
+
+def null_safe_sum(*col_n: str, replace_null=0) -> F.Column:
+    if len(col_n) == 0:
+        return F.lit(0)
+    else:
+        _sum = F.coalesce(col_n[0], F.lit(replace_null))
+        for column in col_n[1:]:
+            _sum = _sum.__add__(F.coalesce(column, F.lit(replace_null)))
+    return _sum
+
+
+def null_safe_sub(*col_n: str, replace_null=0) -> F.Column:
+    if len(col_n) == 0:
+        return F.lit(0)
+    else:
+        _sub = F.coalesce(col_n[0], F.lit(replace_null))
+        for column in col_n[1:]:
+            _sub = _sub.__sub__(F.coalesce(column, F.lit(replace_null)))
+    return _sub

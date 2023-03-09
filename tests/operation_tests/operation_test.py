@@ -2,8 +2,20 @@ import logging
 import pytest
 from pyspark_test import assert_pyspark_df_equal
 from pyspark.sql import SparkSession, functions as F
-from tests.utilz.df_test_helper import compare, create_df
-from df_utils.operation import melt, stack, union_all, _rename_df
+from tests.utilz.df_test_helper import compare
+from tests.operation_tests.operation_test_data import (
+    get_test_data,
+    get_expect_data,
+    get_rename_dict,
+    get_test_rename_data
+)
+from df_utils.operation import (
+    melt,
+    stack,
+    union_all,
+    rename_df,
+    null_safe_sum
+)
 
 
 def quiet_py4j():
@@ -19,13 +31,28 @@ def spark_session(request):
     return spark_session
 
 
+def test_null_safe_sum(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session).cache()
+
+    # act
+    test_df1 = test_df.withColumn("Y1", F.lit(None))
+    test_df2 = test_df1.withColumn("Y2", F.lit(None))
+    output_df = test_df2.withColumn("sum", F.round(null_safe_sum("Y1", "Y2", "Y3"), 2)).select("sum")
+    expected_df = test_df.select("Y3").withColumnRenamed("Y3", "sum")
+
+    # assert
+    compare(expected_df, output_df)
+    assert_pyspark_df_equal(expected_df, output_df)
+
+
 def test_rename_dict(spark_session):
     # arrange
     test_df = get_test_data(spark_session)
     expected_df = get_test_rename_data(spark_session)
 
     # act
-    output_df = _rename_df(test_df, get_rename_dict())
+    output_df = rename_df(test_df, get_rename_dict())
 
     # assert
     compare(expected_df, output_df)
@@ -72,37 +99,3 @@ def test_union(spark_session):
     # assert
     compare(expected_df, output_df)
     assert_pyspark_df_equal(expected_df, output_df)
-
-
-def get_test_data(spark_session):
-    columns = ("col1", "col2", "col3", "Y1", "Y2", "Y3")
-    data = [(4000521, "BOF_I2189490CA-20", "89EB", 1000.01, 2000.02, 3000.03),
-            (4000521, "BOF_I2189490CA-20", "89EK", 4000.04, 5000.05, 6000.06),
-            (4000521, "BOF_I2189490CA-20", "89EN", 7000.07, 8000.08, 9000.09)]
-    return create_df(columns, data, spark_session)
-
-
-def get_expect_data(spark_session):
-    columns = ("col1", "col2", "col3", "category", "value")
-    data = [(4000521, "BOF_I2189490CA-20", "89EB", "Y1", 1000.01),
-            (4000521, "BOF_I2189490CA-20", "89EB", "Y2", 2000.02),
-            (4000521, "BOF_I2189490CA-20", "89EB", "Y3", 3000.03),
-            (4000521, "BOF_I2189490CA-20", "89EK", "Y1", 4000.04),
-            (4000521, "BOF_I2189490CA-20", "89EK", "Y2", 5000.05),
-            (4000521, "BOF_I2189490CA-20", "89EK", "Y3", 6000.06),
-            (4000521, "BOF_I2189490CA-20", "89EN", "Y1", 7000.07),
-            (4000521, "BOF_I2189490CA-20", "89EN", "Y2", 8000.08),
-            (4000521, "BOF_I2189490CA-20", "89EN", "Y3", 9000.09)]
-    return create_df(columns, data, spark_session)
-
-
-def get_rename_dict():
-    return {"col1": "measure1", "col2": "measure2", "col3": "measure3"}
-
-
-def get_test_rename_data(spark_session):
-    columns = ("measure1", "measure2", "measure3", "Y1", "Y2", "Y3")
-    data = [(4000521, "BOF_I2189490CA-20", "89EB", 1000.01, 2000.02, 3000.03),
-            (4000521, "BOF_I2189490CA-20", "89EK", 4000.04, 5000.05, 6000.06),
-            (4000521, "BOF_I2189490CA-20", "89EN", 7000.07, 8000.08, 9000.09)]
-    return create_df(columns, data, spark_session)
