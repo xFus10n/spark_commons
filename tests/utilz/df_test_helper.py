@@ -6,16 +6,16 @@ def create_df(columns: tuple, data: list[tuple], spark_session, partitions=1):
     return spark_session.createDataFrame(data).toDF(*columns).coalesce(partitions)
 
 
-def compare(df1_exp, df2_act):
+def compare(expected_df, actual_df):
     print()
     print("expected:")
-    df1_exp = df1_exp.cache()
-    df1_exp.show()
+    expected_df = expected_df.cache()
+    expected_df.show()
     print("actual:")
-    df2_act = df2_act.cache()
-    df2_act.show() if df2_act is not None else print("Actual Dataframe Is None")
+    actual_df = actual_df.cache()
+    actual_df.show() if actual_df is not None else print("Actual Dataframe Is None")
 
-    df_compare = df1_exp.subtract(df2_act)
+    df_compare = expected_df.subtract(actual_df)
     if df_compare.count() > 0:
         print("difference:")
-        df1_exp.subtract(df2_act).show() if df2_act is not None else print("Actual Dataframe Is None")
+        expected_df.subtract(actual_df).show() if actual_df is not None else print("Actual Dataframe Is None")

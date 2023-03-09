@@ -33,15 +33,17 @@ def spark_session(request):
 
 def test_null_safe_sum(spark_session):
     # arrange
-    test_df = get_test_data(spark_session)
+    test_df = get_test_data(spark_session).cache()
 
     # act
-    test_df = test_df.withColumn("Y1", F.lit(None))
-    test_df = test_df.withColumn("Y2", F.lit(None))
-    output_df = test_df.withColumn("sum", F.round(null_safe_sum("Y1", "Y2"), 2))
+    test_df1 = test_df.withColumn("Y1", F.lit(None))
+    test_df2 = test_df1.withColumn("Y2", F.lit(None))
+    output_df = test_df2.withColumn("sum", F.round(null_safe_sum("Y1", "Y2", "Y3"), 2)).select("sum")
+    expected_df = test_df.select("Y3").withColumnRenamed("Y3", "sum")
 
     # assert
-    output_df.show()
+    compare(expected_df, output_df)
+    assert_pyspark_df_equal(expected_df, output_df)
 
 
 def test_rename_dict(spark_session):
