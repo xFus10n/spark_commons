@@ -57,3 +57,13 @@ def null_safe_sum(*col_n: str, replace_null=0) -> F.Column:
         for column in col_n[1:]:
             _sum = _sum.__add__(F.coalesce(column, F.lit(replace_null)))
     return _sum
+
+
+def null_safe_sub(*col_n: str, replace_null=0) -> F.Column:
+    if len(col_n) == 0:
+        return F.lit(0)
+    else:
+        _sub = F.coalesce(col_n[0], F.lit(replace_null))
+        for column in col_n[1:]:
+            _sub = _sub.__sub__(F.coalesce(column, F.lit(replace_null)))
+    return _sub
