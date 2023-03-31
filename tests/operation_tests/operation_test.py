@@ -15,7 +15,8 @@ from df_utils.operation import (
     union_all,
     rename_df,
     null_safe_sum,
-    null_safe_sub
+    null_safe_sub,
+    add_missing_columns
 )
 
 
@@ -30,6 +31,19 @@ def spark_session(request):
     request.addfinalizer(lambda: spark_session.stop())
     quiet_py4j()
     return spark_session
+
+
+def test_add_missing_columns(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session).cache()
+
+    # act
+    expected_df = test_df.withColumn("test", F.lit(None))
+    actual_df = add_missing_columns(test_df, expected_df)
+
+    # assert
+    compare(expected_df, actual_df)
+    assert_pyspark_df_equal(expected_df, actual_df)
 
 
 def test_null_safe_sum(spark_session):
