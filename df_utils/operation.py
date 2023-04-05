@@ -1,4 +1,4 @@
-from pyspark.sql import DataFrame, functions as F
+from pyspark.sql import DataFrame, functions as F, Column
 from pyspark.sql.types import StringType, DataType
 from functools import partial, reduce
 
@@ -49,7 +49,7 @@ def cast_columns(df: DataFrame, colz: list, new_type: DataType = StringType()) -
     return df.select([F.col(c).cast(new_type) if c in colz else c for c in df.columns])
 
 
-def null_safe_sum(*col_n: str, replace_null=0) -> F.Column:
+def null_safe_sum(*col_n: str, replace_null=0) -> Column:
     if len(col_n) == 0:
         return F.lit(0)
     else:
@@ -59,7 +59,7 @@ def null_safe_sum(*col_n: str, replace_null=0) -> F.Column:
     return _sum
 
 
-def null_safe_sub(*col_n: str, replace_null=0) -> F.Column:
+def null_safe_sub(*col_n: str, replace_null=0) -> Column:
     if len(col_n) == 0:
         return F.lit(0)
     else:
@@ -67,3 +67,11 @@ def null_safe_sub(*col_n: str, replace_null=0) -> F.Column:
         for column in col_n[1:]:
             _sub = _sub.__sub__(F.coalesce(column, F.lit(replace_null)))
     return _sub
+
+
+def chain_conditions(conditions_list: list[Column], default_value: Column) -> Column:
+
+    if conditions_list:
+        return conditions_list[0].otherwise(chain_conditions(conditions_list[1:], default_value))
+    else:
+        return default_value
