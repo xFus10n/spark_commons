@@ -75,6 +75,19 @@ def test_null_safe_sub(spark_session):
     assert_pyspark_df_equal(expected_df, output_df)
 
 
+def test_null_safe_sub_edge(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session).cache()
+
+    # act
+    output_df = test_df.withColumn("sub", null_safe_sub()).select("sub")
+    expected_df = test_df.withColumn("sub", F.lit(0)).select("sub")
+
+    # assert
+    compare(expected_df, output_df)
+    assert_pyspark_df_equal(expected_df, output_df)
+
+
 def test_rename_dict(spark_session):
     # arrange
     test_df = get_test_data(spark_session)

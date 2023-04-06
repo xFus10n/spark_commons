@@ -60,13 +60,20 @@ def null_safe_sum(*col_n: str, replace_null=0) -> Column:
 
 
 def null_safe_sub(*col_n: str, replace_null=0) -> Column:
-    if len(col_n) == 0:
-        return F.lit(0)
-    else:
+    if col_n:
         _sub = F.coalesce(col_n[0], F.lit(replace_null))
         for column in col_n[1:]:
             _sub = _sub.__sub__(F.coalesce(column, F.lit(replace_null)))
-    return _sub
+        return _sub
+    else:
+        return F.lit(0)
+    # if len(col_n) == 0:
+    #     return F.lit(0)
+    # else:
+    #     _sub = F.coalesce(col_n[0], F.lit(replace_null))
+    #     for column in col_n[1:]:
+    #         _sub = _sub.__sub__(F.coalesce(column, F.lit(replace_null)))
+    # return _sub
 
 
 def chain_conditions(conditions_list: list[Column], default_value: Column) -> Column:
