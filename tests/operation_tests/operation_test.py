@@ -2,6 +2,7 @@ import logging
 import pytest
 from pyspark_test import assert_pyspark_df_equal
 from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.types import IntegerType
 from tests.utilz.df_test_helper import compare
 from tests.operation_tests.operation_test_data import (
     get_test_data,
@@ -34,6 +35,22 @@ def spark_session(request):
     request.addfinalizer(lambda: spark_session.stop())
     quiet_py4j()
     return spark_session
+
+
+def test_cast(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session).cache()
+    cast_cols = ["Y1", "Y2", "Y3"]
+
+    # act
+    actual_df = cast_columns(test_df, cast_cols, IntegerType())
+    act_schema = actual_df.schema.fields
+
+    # assert
+    for struct in act_schema:
+        if struct.name in cast_cols:
+            dtype = struct.dataType
+            assert dtype == IntegerType(), f"expect Integer type column for cast columns"
 
 
 def test_chain_conditions(spark_session):
