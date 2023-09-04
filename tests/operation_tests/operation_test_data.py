@@ -9,6 +9,14 @@ def get_test_data(spark_session):
     return create_df(columns, data, spark_session)
 
 
+def get_exp_data_for_chain_cond(spark_session):
+    columns = ("col1", "col2", "col3", "Y1", "Y2", "Y3", "test")
+    data = [(4000521, "BOF_I2189490CA-20", "89EB", 1000.01, 2000.02, 3000.03, 1),
+            (4000521, "BOF_I2189490CA-20", "89EK", 4000.04, 5000.05, 6000.06, 2),
+            (4000521, "BOF_I2189490CA-20", "89EN", 7000.07, 8000.08, 9000.09, 3)]
+    return create_df(columns, data, spark_session)
+
+
 def get_expect_data(spark_session):
     columns = ("col1", "col2", "col3", "category", "value")
     data = [(4000521, "BOF_I2189490CA-20", "89EB", "Y1", 1000.01),

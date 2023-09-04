@@ -7,10 +7,16 @@ def create_df(columns: tuple, data: list[tuple], spark_session, partitions=1):
 
 
 def compare(expected_df, actual_df):
+    if (actual_df is None) | (expected_df is None):
+        print()
+        print("Check Dataframes")
+        return
+
     print()
     print("expected:")
     expected_df = expected_df.cache()
     expected_df.show()
+
     print("actual:")
     actual_df = actual_df.cache()
     actual_df.show() if actual_df is not None else print("Actual Dataframe Is None")

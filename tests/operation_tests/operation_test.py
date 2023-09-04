@@ -7,7 +7,8 @@ from tests.operation_tests.operation_test_data import (
     get_test_data,
     get_expect_data,
     get_rename_dict,
-    get_test_rename_data
+    get_test_rename_data,
+    get_exp_data_for_chain_cond
 )
 from df_utils.operation import (
     melt,
@@ -16,7 +17,9 @@ from df_utils.operation import (
     rename_df,
     null_safe_sum,
     null_safe_sub,
-    add_missing_columns
+    add_missing_columns,
+    chain_conditions,
+    cast_columns
 )
 
 
@@ -31,6 +34,22 @@ def spark_session(request):
     request.addfinalizer(lambda: spark_session.stop())
     quiet_py4j()
     return spark_session
+
+
+def test_chain_conditions(spark_session):
+    # arrange
+    test_df = get_test_data(spark_session).cache()
+    cond_1 = F.when(F.col("col3") == "89EB", F.lit(1))
+    cond_2 = F.when(F.col("col3") == "89EK", F.lit(2))
+    chain_func = chain_conditions([cond_1, cond_2], F.lit(3))
+
+    # act
+    actual_df = test_df.withColumn("test", chain_func)
+    expected_df = get_exp_data_for_chain_cond(spark_session)
+
+    # assert
+    compare(expected_df, actual_df)
+    assert_pyspark_df_equal(expected_df, actual_df, check_dtype=False)
 
 
 def test_add_missing_columns(spark_session):
