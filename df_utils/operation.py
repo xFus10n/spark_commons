@@ -184,10 +184,58 @@ def add_missing_columns(df: DataFrame, ref_df: DataFrame) -> DataFrame:
 
 
 def cast_columns(df: DataFrame, colz: list, new_type: DataType = StringType()) -> DataFrame:
+    """
+    Casts specified columns of a PySpark DataFrame to a new data type.
+
+    Parameters:
+    - df (DataFrame): The input PySpark DataFrame whose columns are to be cast.
+    - colz (list): A list of column names (strings) in the DataFrame that should be cast to the new data type.
+    - new_type (DataType, optional): The target data type to which the specified columns should be cast.
+      This should be a PySpark SQL DataType (e.g., StringType(), IntegerType()). The default is StringType().
+
+    Returns:
+    - DataFrame: A new DataFrame with the specified columns cast to the new data type. Other columns
+      remain unchanged.
+
+    Example:
+    --------
+    df = spark.createDataFrame([("1", "200"), ("2", "300"), ("3", "400")], ["id", "value"])
+    casted_df = cast_columns(df, ["value"], IntegerType())
+    casted_df.printSchema()
+    root
+     |-- id: string (nullable = true)
+     |-- value: integer (nullable = true)
+    """
     return df.select([F.col(c).cast(new_type) if c in colz else c for c in df.columns])
 
 
 def null_safe_sum(*col_n: str, replace_null=0) -> Column:
+    """
+    Performs a null-safe summation operation on a sequence of column names or Column expressions.
+
+    Parameters:
+    - *col_n (str): Variable length argument list specifying the column names or Column expressions
+      to be summed. The summation is performed from left to right.
+    - replace_null (int or float, optional): The value to use in place of null values during
+      summation. Defaults to 0.
+
+    Returns:
+    - Column: A PySpark Column object resulting from the null-safe summation of the provided columns.
+      If no columns are provided, it returns a literal column with the `replace_null` value.
+
+    Example:
+    --------
+    df = spark.createDataFrame([(100, None, 50), (None, 50, 50), (30, 20, None)], ["col1", "col2", "col3"])
+    df = df.withColumn("summed", null_safe_sum(col("col1"), col("col2"), col("col3"), replace_null=0))
+    df.show()
+    +----+----+----+------+
+    |col1|col2|col3|summed|
+    +----+----+----+------+
+    | 100|null|  50| 150.0|
+    |null|  50|  50| 100.0|
+    |  30|  20|null|  50.0|
+    +----+----+----+------+
+    """
     if col_n:
         _sum = F.coalesce(col_n[0], F.lit(replace_null))
         for column in col_n[1:]:
@@ -198,6 +246,32 @@ def null_safe_sum(*col_n: str, replace_null=0) -> Column:
 
 
 def null_safe_sub(*col_n: str, replace_null=0) -> Column:
+    """
+    Performs a null-safe subtraction operation on a sequence of column names or Column expressions.
+
+    Parameters:
+    - *col_n (str): Variable length argument list specifying the column names or Column expressions
+      to be subtracted. The subtraction is performed from left to right.
+    - replace_null (int or float, optional): The value to use in place of null values during
+      subtraction. Defaults to 0.
+
+    Returns:
+    - Column: A PySpark Column object resulting from the null-safe subtraction of the provided columns.
+      If no columns are provided, it returns a literal column with the `replace_null` value.
+
+    Example:
+    --------
+    df = spark.createDataFrame([(100, None), (None, 50), (30, 20)], ["col1", "col2"])
+    df = df.withColumn("subtracted", null_safe_sub(col("col1"), col("col2"), replace_null=0))
+    df.show()
+    +----+----+-----------+
+    |col1|col2|subtracted |
+    +----+----+-----------+
+    | 100|null|      100.0|
+    |null|  50|      -50.0|
+    |  30|  20|       10.0|
+    +----+----+-----------+
+    """
     if col_n:
         _sub = F.coalesce(col_n[0], F.lit(replace_null))
         for column in col_n[1:]:
@@ -208,7 +282,45 @@ def null_safe_sub(*col_n: str, replace_null=0) -> Column:
 
 
 def chain_conditions(conditions_list: list[Column], default_value: Column) -> Column:
+    """
+    Chains together a sequence of PySpark Column conditions with an optional default value.
 
+    This function is designed to concatenate a list of PySpark Column conditions using the
+    otherwise chaining method, creating a cascading set of conditions similar to an 'if-elif-else'
+    statement in traditional programming. If none of the conditions in the list are satisfied,
+    the default value is returned.
+
+    Parameters:
+    - conditions_list (list[Column]): A list of PySpark Column conditions to be chained together.
+    - default_value (Column): The default value to be returned if none of the conditions are met.
+
+    Returns:
+    - Column: A PySpark Column object representing the chained conditions and default value.
+
+    Example:
+    --------
+    df = spark.createDataFrame([(1, 'a'), (2, 'b'), (3, 'c')], ["id", "value"])
+    condition1 = when(col("id") == 1, "One")
+    condition2 = when(col("id") == 2, "Two")
+    condition3 = when(col("id") == 3, "Three")
+    default_condition = "Other"
+    result = df.withColumn("result", chain_conditions([condition1, condition2, condition3], default_condition))
+    result.show()
+    +---+-----+------+
+    | id|value|result|
+    +---+-----+------+
+    |  1|    a|   One|
+    |  2|    b|   Two|
+    |  3|    c| Three|
+    +---+-----+------+
+
+    Notes:
+    ------
+    - Ensure that the conditions provided in the `conditions_list` are mutually exclusive to avoid
+      ambiguous results. If multiple conditions can be satisfied simultaneously, only the first
+      satisfied condition will be considered.
+    - The default value is returned when none of the conditions in the `conditions_list` are met.
+    """
     if conditions_list:
         return conditions_list[0].otherwise(chain_conditions(conditions_list[1:], default_value))
     else:
