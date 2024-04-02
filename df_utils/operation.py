@@ -75,3 +75,15 @@ def chain_conditions(conditions_list: list[Column], default_value: Column) -> Co
         return conditions_list[0].otherwise(chain_conditions(conditions_list[1:], default_value))
     else:
         return default_value
+
+def with_columns(cols, df: DataFrame, f: callable) -> DataFrame:
+    """
+    :param cols: a list of column names to transform
+    :param df: an input DataFrame
+    :param f: a function to be applied on each column name in cols. It should return a Column
+    :return: DataFrame with the transformations applied
+    """
+    # Select all columns from the existing DataFrame
+    # and apply the transformation function to the specified columns
+    selected_cols = [F.col(c) for c in df.columns if c not in cols] + [f(c).alias(c) for c in cols]
+    return df.select(*selected_cols)

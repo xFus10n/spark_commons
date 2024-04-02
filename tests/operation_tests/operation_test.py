@@ -20,7 +20,8 @@ from df_utils.operation import (
     null_safe_sub,
     add_missing_columns,
     chain_conditions,
-    cast_columns
+    cast_columns,
+    with_columns
 )
 
 
@@ -37,9 +38,26 @@ def spark_session(request):
     return spark_session
 
 
+def test_with_columns(spark_session):
+
+    # arrange
+    test_df = get_test_data(spark_session)
+    test_cols = ["Y1", "Y2", "Y3"]
+
+    # act
+    df_act = with_columns(test_cols, test_df, lambda col: F.floor(col))
+    df_exp = (
+        test_df.withColumn("Y1", F.floor("Y1"))
+        .withColumn("Y2", F.floor("Y2"))
+        .withColumn("Y3", F.floor("Y3"))
+    )
+
+    # assert
+    assert_pyspark_df_equal(df_act, df_exp)
+
 def test_cast(spark_session):
     # arrange
-    test_df = get_test_data(spark_session).cache()
+    test_df = get_test_data(spark_session)
     cast_cols = ["Y1", "Y2", "Y3"]
 
     # act
@@ -55,7 +73,7 @@ def test_cast(spark_session):
 
 def test_chain_conditions(spark_session):
     # arrange
-    test_df = get_test_data(spark_session).cache()
+    test_df = get_test_data(spark_session)
     cond_1 = F.when(F.col("col3") == "89EB", F.lit(1))
     cond_2 = F.when(F.col("col3") == "89EK", F.lit(2))
     chain_func = chain_conditions([cond_1, cond_2], F.lit(3))
@@ -71,7 +89,7 @@ def test_chain_conditions(spark_session):
 
 def test_add_missing_columns(spark_session):
     # arrange
-    test_df = get_test_data(spark_session).cache()
+    test_df = get_test_data(spark_session)
 
     # act
     expected_df = test_df.withColumn("test", F.lit(None))
@@ -84,7 +102,7 @@ def test_add_missing_columns(spark_session):
 
 def test_null_safe_sum(spark_session):
     # arrange
-    test_df = get_test_data(spark_session).cache()
+    test_df = get_test_data(spark_session)
 
     # act
     test_df1 = test_df.withColumn("Y1", F.lit(None))
@@ -99,7 +117,7 @@ def test_null_safe_sum(spark_session):
 
 def test_null_safe_sub(spark_session):
     # arrange
-    test_df = get_test_data(spark_session).cache()
+    test_df = get_test_data(spark_session)
 
     # act
     test_df1 = test_df.withColumn("Y1", F.lit(None))
@@ -113,7 +131,7 @@ def test_null_safe_sub(spark_session):
 
 def test_null_safe_sub_edge(spark_session):
     # arrange
-    test_df = get_test_data(spark_session).cache()
+    test_df = get_test_data(spark_session)
 
     # act
     output_df = test_df.withColumn("sub", null_safe_sub()).select("sub")
